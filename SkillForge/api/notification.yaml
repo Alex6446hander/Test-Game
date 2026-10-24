@@ -1,0 +1,36 @@
+openapi: 3.1.0
+info:
+  title: Notification Service API
+  version: 1.0.0
+paths:
+  /internal/notify:
+    post:
+      tags: [internal]
+      summary: Отправить уведомление пользователю (триггерится событиями)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [playerId, eventType, templateData]
+              properties:
+                playerId: { type: string, format: uuid }
+                eventType: { type: string, enum: [LEVEL_UP, REWARD_PURCHASED, HABIT_STREAK] }
+                templateData: { type: object, description: "Данные для подстановки в шаблон" }
+      responses:
+        '202': { description: Уведомление поставлено в очередь на отправку }
+        '400':
+          description: Ошибка валидации данных
+          content:
+            application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetail' } }
+
+components:
+  schemas:
+    ProblemDetail:
+      type: object
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }

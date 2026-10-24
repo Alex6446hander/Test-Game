@@ -1,0 +1,80 @@
+openapi: 3.1.0
+info:
+  title: Reward Service API
+  version: 1.0.0
+servers:
+  - url: /api/v1
+paths:
+  /rewards:
+    get:
+      tags: [public]
+      summary: Получить доступные награды (магазин)
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: Список наград.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/RewardItem' } }
+                  total: { type: integer }
+
+  /internal/rewards/grant:
+    post:
+      tags: [internal]
+      summary: Выдать награду игроку (вызывается после HabitCompleted)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [playerId, rewardId, correlationId]
+              properties:
+                playerId: { type: string, format: uuid }
+                rewardId: { type: string, format: uuid }
+                correlationId: { type: string, format: uuid }
+      responses:
+        '200': { description: Награда успешно выдана }
+        '400':
+          description: Недостаточно средств или награда недоступна
+          content:
+            application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetail' } }
+
+components:
+  schemas:
+    RewardItem:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        cost: { type: integer }
+        stock: { type: integer }
+    ProblemDetail:
+      type: object
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+    RewardGrantFailedEvent:
+      type: object
+      description: Событие публикуется в топик 'rewards.events' при сбое выдачи
+      properties:
+        eventId: { type: string, format: uuid }
+        eventType: { type: string, example: "reward.grant_failed" }
+        occurredAt: { type: string, format: date-time }
+        payload:
+          type: object
+          properties:
+            correlationId: { type: string, format: uuid, description: "Для связи с исходной транзакцией" }
+            playerId: { type: string, format: uuid }
+            reason: { type: string, example: "Out of stock" }

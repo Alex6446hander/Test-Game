@@ -1,0 +1,66 @@
+<mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    <mxCell id="actor_user" value="User" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="60" y="40" width="30" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="line_user" value="" style="endArrow=none;html=1;dashed=1;" edge="1" parent="1" source="actor_user">
+      <mxGeometry width="50" height="50" relative="1" as="geometry">
+        <mxPoint x="75" y="400" as="sourcePoint" />
+        <mxPoint x="75" y="600" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="svc_quest" value="quest-service" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="160" y="40" width="100" height="560" as="geometry" />
+    </mxCell>
+    <mxCell id="svc_profile" value="profile-service" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="320" y="40" width="100" height="560" as="geometry" />
+    </mxCell>
+    <mxCell id="broker" value="RabbitMQ" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="480" y="40" width="100" height="560" as="geometry" />
+    </mxCell>
+    <mxCell id="svc_reward" value="reward-service" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+      <mxGeometry x="640" y="40" width="100" height="560" as="geometry" />
+    </mxCell>
+    <mxCell id="msg1" value="1. POST /habits/{id}/complete&#10;(Idempotency-Key)" style="html=1;verticalAlign=bottom;endArrow=block;" edge="1" parent="1" source="line_user" target="svc_quest">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="120" y="140" as="sourcePoint" /></mxGeometry>
+    </mxCell>
+    <mxCell id="msg2" value="2. Publish: HabitCompleted" style="html=1;verticalAlign=bottom;endArrow=block;dashed=1;" edge="1" parent="1" source="svc_quest" target="broker">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="300" y="180" as="sourcePoint" /></mxGeometry>
+    </mxCell>
+    <mxCell id="msg3" value="3. Deliver: HabitCompleted" style="html=1;verticalAlign=bottom;endArrow=block;dashed=1;" edge="1" parent="1" source="broker" target="svc_profile">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="450" y="220" as="sourcePoint" /></mxGeometry>
+    </mxCell>
+    <mxCell id="act_profile_ok" value="4. Add +500 XP ✅" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="svc_profile">
+      <mxGeometry x="20" y="100" width="60" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="msg4" value="5. Deliver: HabitCompleted" style="html=1;verticalAlign=bottom;endArrow=block;dashed=1;" edge="1" parent="1" source="broker" target="svc_reward">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="550" y="260" as="sourcePoint" /></mxGeometry>
+    </mxCell>
+    <mxCell id="frame_fail" value="СБОЙ: Награда недоступна (Out of stock)" style="shape=umlFrame;whiteSpace=wrap;html=1;width=100;height=30;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="580" y="280" width="220" height="120" as="geometry" />
+    </mxCell>
+    <mxCell id="act_reward_fail" value="6. Ошибка выдачи награды ❌" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="svc_reward">
+      <mxGeometry x="20" y="100" width="60" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="msg5" value="7. Publish: RewardGrantFailed&#10;(correlationId)" style="html=1;verticalAlign=bottom;endArrow=block;dashed=1;strokeColor=#b85450;" edge="1" parent="1" source="svc_reward" target="broker">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="600" y="340" as="sourcePoint" /></mxGeometry>
+    </mxCell>
+    <mxCell id="frame_comp" value="КОМПЕНСАЦИЯ (Saga Rollback)" style="shape=umlFrame;whiteSpace=wrap;html=1;width=100;height=30;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="100" y="380" width="480" height="140" as="geometry" />
+    </mxCell>
+    <mxCell id="msg6" value="8. Deliver: RewardGrantFailed" style="html=1;verticalAlign=bottom;endArrow=block;dashed=1;strokeColor=#d6b650;" edge="1" parent="1" source="broker" target="svc_profile">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="450" y="420" as="sourcePoint" /></mxGeometry>
+    </mxCell>
+    <mxCell id="act_profile_revert" value="9. Revert -500 XP 🔄" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="svc_profile">
+      <mxGeometry x="20" y="180" width="60" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="msg7" value="10. POST /internal/habits/{id}/revert" style="html=1;verticalAlign=bottom;endArrow=block;strokeColor=#d6b650;" edge="1" parent="1" source="svc_profile" target="svc_quest">
+      <mxGeometry relative="1" as="geometry"><mxPoint x="300" y="480" as="sourcePoint" /></mxGeometry>
+    </mxCell>
+    <mxCell id="act_quest_revert" value="11. Status = AVAILABLE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="svc_quest">
+      <mxGeometry x="20" y="220" width="60" height="30" as="geometry" />
+    </mxCell>
+  </root>
+</mxGraphModel>

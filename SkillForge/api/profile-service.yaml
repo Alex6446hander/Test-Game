@@ -1,0 +1,82 @@
+openapi: 3.1.0
+info:
+  title: Profile Service API
+  version: 1.0.0
+servers:
+  - url: /api/v1
+paths:
+  /profile/{id}:
+    get:
+      tags: [public]
+      summary: Получить статистику игрока
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Данные профиля
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlayerStats' }
+        '404':
+          description: Профиль не найден
+          content:
+            application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetail' } }
+
+  /internal/profile/{id}/xp:
+    patch:
+      tags: [internal]
+      summary: Изменить XP (используется в Саге для начисления или отката)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, correlationId, action]
+              properties:
+                amount: { type: integer, description: "Положительное для начисления, отрицательное для отката" }
+                correlationId: { type: string, format: uuid }
+                action: { type: string, enum: [GRANT, REVERT] }
+      responses:
+        '200': { description: XP успешно обновлен }
+        '400':
+          description: Ошибка валидации
+          content:
+            application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetail' } }
+
+components:
+  schemas:
+    PlayerStats:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        level: { type: integer }
+        currentXp: { type: integer }
+        coins: { type: integer }
+    ProblemDetail:
+      type: object
+      properties:
+        type: { type: string, format: uri, example: "https://api.rpg-tracker.local/errors/not-found" }
+        title: { type: string, example: "Not Found" }
+        status: { type: integer, example: 404 }
+        detail: { type: string, example: "Профиль не найден." }
+    LevelUpEvent:
+      type: object
+      description: Событие публикуется в топик 'profile.events'
+      properties:
+        eventId: { type: string, format: uuid }
+        eventType: { type: string, example: "profile.level_up" }
+        occurredAt: { type: string, format: date-time }
+        payload:
+          type: object
+          properties:
+            playerId: { type: string, format: uuid }
+            newLevel: { type: integer }
